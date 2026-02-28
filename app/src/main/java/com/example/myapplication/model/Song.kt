@@ -7,5 +7,6 @@ data class Song(
     val id: Long,          // identifiant unique
     val title: String,     // titre
     val artist: String,    // nom de l'artiste
-    val uri: Uri           // chemin vers le fichier audio
+    val uri: Uri,          // chemin vers le fichier audio
+    val durationMs: Int? = null
 )

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.foundation.clickable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,7 +17,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.model.Song
 
-//Une seule ligne de musique dans la liste
+// Affiche une seule ligne pour une musique dans la liste
+//Montre titre, artiste, durée
+//Permet de jouer, mettre en pause ou reprendre , supprimer ou télécharger  la musique
 
 @Composable
 fun SongItem(
@@ -28,17 +31,22 @@ fun SongItem(
     onPlayClick: () -> Unit,
     onPauseClick: () -> Unit,
     onResumeClick: () -> Unit,
-    onSeek: (Int) -> Unit
+    onSeek: (Int) -> Unit,
+    onDeleteClick: () -> Unit,
+    onDownloadClick: () -> Unit,
+    onClick: () -> Unit
 ) {
 
-    // Carte de la musique
+    // Carte principale de la musique
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentSong) Color(0xFF3949AB) else Color(0xFF282828)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }  // clique sur la carte
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -69,7 +77,7 @@ fun SongItem(
                 Spacer(modifier = Modifier.width(16.dp))
 
 
-               // Infos musique
+               // Infos musique  : titre, artiste, durée
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = song.title,
@@ -77,23 +85,33 @@ fun SongItem(
                         color = Color.White,
                         maxLines = 1
                     )
-                    Text(
-                        text = song.artist ?: "Artiste inconnu",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
-                        maxLines = 1
-                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(
+                            text = if (song.artist.isBlank() || song.artist.equals("<unknown>", ignoreCase = true)) "Artiste inconnu" else song.artist,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            maxLines = 1
+                        )
+                        val dur = song.durationMs ?: 0
+                        if (dur > 0) {
+                            Text(
+                                text = formatTime(dur),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.LightGray
+                            )
+                        }
+                    }
                 }
 
                 // Bouton Play / Pause
                 IconButton(
                     onClick = {
                         if (isCurrentSong && isPlaying) {
-                            onPauseClick()
+                            onPauseClick()  // pause si déjà en cours
                         } else if (isCurrentSong && !isPlaying) {
-                            onResumeClick()
+                            onResumeClick()   // reprendre si en pause
                         } else {
-                            onPlayClick()
+                            onPlayClick()   // jouer sinon
                         }
                     },
                     modifier = Modifier
@@ -107,18 +125,43 @@ fun SongItem(
                         fontWeight = FontWeight.Bold
                     )
                 }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+
+                // Bouton supprimer
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color(0xFFEF5350), CircleShape)
+                ) {
+                    Text("🗑", color = Color.White)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+
+
+                // Bouton télécharger
+                IconButton(
+                    onClick = onDownloadClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(Color.White, CircleShape)
+                ) {
+                    Text("⬇", color = Color.Black)
+                }
             }
 
 
 
-            // Slider seulement pour la musique en cours
+            // Slider pour musique en cours
             if (isCurrentSong && totalDuration > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Slider(
                     value = currentPosition.toFloat(),
                     onValueChange = { newValue ->
-                        onSeek(newValue.toInt())
+                        onSeek(newValue.toInt())   // changer position
                     },
                     valueRange = 0f..totalDuration.toFloat(),
                     colors = SliderDefaults.colors(
