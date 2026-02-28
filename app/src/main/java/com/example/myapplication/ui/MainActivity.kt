@@ -246,6 +246,7 @@ class MainActivity : ComponentActivity() {
             songsList.add(song)
             persistAddedSong(song)    // sauvegarde dans SharedPreferences
         } else {
+            Toast.makeText(this, "Cette chanson est déjà dans la liste", Toast.LENGTH_SHORT).show()
         }
     }
 
